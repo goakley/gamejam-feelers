@@ -26,6 +26,24 @@ int quit_video();
 int init_audio();
 int quit_audio();
 
+/* Structs */
+typedef struct {
+  float position[3];
+  float velocity[3];
+  float rotation;
+  float orientation[6];
+} Player;
+
+#define ENTITY_FINISH 1
+#define ENTITY_GROWLER 2
+typedef struct {
+  int type;
+  float position[3];
+} Entity;
+
+
+/*****************************************************************************/
+/*** DEFINITIONS ***/
 
 /* Variables */
 #ifdef DEBUG
@@ -43,26 +61,13 @@ ALCcontext *sound_ctx = NULL;
 ALuint sound_bufs[NUM_AUDIO];
 ALuint sound_srcs[NUM_AUDIO];
 
-
-typedef struct {
-  float position[3];
-  float velocity[3];
-  float rotation;
-  float orientation[6];
-} Player;
 Player player = {{0,0,0}, {0,0,0}, M_PI_2, {0,0,-1, 0,1,0}};
-
-#define ENTITY_FINISH 1
-#define ENTITY_GROWLER 2
-typedef struct {
-  int type;
-  float position[3];
-} Entity;
 Entity finish = {ENTITY_FINISH, {0,0,-100}};
 Entity growler = {ENTITY_GROWLER, {0,0,100}};
 
 
-
+/*****************************************************************************/
+/*** GAME LOOP ***/
 void game_loop() {
   Uint32 pframe_time = SDL_GetTicks();
   Uint32 frame_time;
@@ -139,21 +144,19 @@ void game_loop() {
 }
 
 
-
+/*****************************************************************************/
+/*** MAIN ***/
 int main(int argc, char *argv[])
 {
   /* INIT */
   int error = init();
   if (error != 0)
     return 1;
-
+  /* GAME */
   game_loop();
-
   /* QUIT */
   quit();
 }
-
-
 
 
 /*****************************************************************************/
