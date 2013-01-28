@@ -14,6 +14,11 @@
 #include <AL/alut.h>
 
 
+
+/*****************************************************************************/
+/*** DECLARATIONS ***/
+
+/* Functions */
 int init();
 int quit();
 int init_video();
@@ -22,28 +27,7 @@ int init_audio();
 int quit_audio();
 
 
-void al_printerr(ALenum error) {
-  char *msg;
-  switch (error) {
-  case AL_INVALID_NAME :
-    msg = "A bad name (ID) was passed to an OpenAL function";break;
-  case AL_INVALID_ENUM :
-    msg = "An invalid enum value was passed to an OpenAL function";break;
-  case AL_INVALID_VALUE :
-    msg = "An invalid value was passed to an OpenAL function";break;
-  case AL_INVALID_OPERATION :
-    msg = "The requested operation is not valid";break;
-  case AL_OUT_OF_MEMORY :
-    msg = "The requested operation resulted in OpenAL running out of memory";
-    break;
-  default :
-    msg = "There is not currently an error";break;
-  }
-  fprintf(stderr, "%s\n", msg);
-}
-
-
-
+/* Variables */
 #ifdef DEBUG
 TTF_Font *font;
 #endif
@@ -62,10 +46,11 @@ ALuint sound_srcs[NUM_AUDIO];
 
 typedef struct {
   float position[3];
+  float velocity[3];
   float rotation;
   float orientation[6];
 } Player;
-Player player = {{0,0,0}, M_PI_2, {0,0,-1, 0,1,0}};
+Player player = {{0,0,0}, {0,0,0}, M_PI_2, {0,0,-1, 0,1,0}};
 
 #define ENTITY_FINISH 1
 #define ENTITY_GROWLER 2
@@ -74,6 +59,7 @@ typedef struct {
   float position[3];
 } Entity;
 Entity finish = {ENTITY_FINISH, {0,0,-100}};
+Entity growler = {ENTITY_GROWLER, {0,0,100}};
 
 
 
@@ -113,11 +99,16 @@ void game_loop() {
       alListenerfv(AL_ORIENTATION, player.orientation);
     }
     if (isMovement) {
-      player.position[0] += player.orientation[0]*frame_diff*0.002*isMovement;
-      player.position[2] += player.orientation[2]*frame_diff*0.002*isMovement;
+      player.velocity[0] = player.orientation[0]*frame_diff*0.002*isMovement;
+      player.velocity[2] = player.orientation[2]*frame_diff*0.002*isMovement;
+      player.position[0] += player.velocity[0];
+      player.position[2] += player.velocity[2];
       alListenerfv(AL_POSITION, player.position);
+    } else {
+      player.velocity[0] = 0.0f;
+      player.velocity[2] = 0.0f;
     }
-    // something something AL_VELOCITY
+    alListenerfv(AL_VELOCITY, player.velocity);
 #ifdef DEBUG
     SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0,0,0));
     char text[80];
@@ -127,14 +118,19 @@ void game_loop() {
     SDL_Surface *texts = TTF_RenderText_Solid(font, text, 
 					     (SDL_Color){255,255,255});
     SDL_BlitSurface(texts, NULL, screen, &pos);
-    sprintf(text, "Rotation: %f", player.rotation);
+    sprintf(text, "Velocity: %f,%f,%f", player.velocity[0],
+	    player.velocity[1], player.velocity[2]);
     texts = TTF_RenderText_Solid(font, text, (SDL_Color){255,255,255});
     pos = (SDL_Rect){0,64,0,0};
+    SDL_BlitSurface(texts, NULL, screen, &pos);
+    sprintf(text, "Rotation: %f", player.rotation);
+    texts = TTF_RenderText_Solid(font, text, (SDL_Color){255,255,255});
+    pos = (SDL_Rect){0,128,0,0};
     SDL_BlitSurface(texts, NULL, screen, &pos);
     sprintf(text, "Orientation: %f,%f,%f", player.orientation[0],
 	    player.orientation[1], player.orientation[2]);
     texts = TTF_RenderText_Solid(font, text, (SDL_Color){255,255,255});
-    pos = (SDL_Rect){0,128,0,0};
+    pos = (SDL_Rect){0,192,0,0};
     SDL_BlitSurface(texts, NULL, screen, &pos);
     SDL_Flip(screen);
 #endif
@@ -160,7 +156,7 @@ int main(int argc, char *argv[])
 
 
 
-
+/*****************************************************************************/
 /*** SETUP CODE ***/
 
 int init() {
