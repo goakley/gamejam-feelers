@@ -62,11 +62,10 @@ ALuint sound_srcs[NUM_AUDIO];
 
 typedef struct {
   float position[3];
-  float velocity[3];
   float rotation;
   float orientation[6];
 } Player;
-Player player = {{0,0,0}, {0,0,0}, M_PI_2, {0,0,-1, 0,1,0}};
+Player player = {{0,0,0}, M_PI_2, {0,0,-1, 0,1,0}};
 
 #define ENTITY_FINISH 1
 #define ENTITY_GROWLER 2
@@ -111,11 +110,14 @@ void game_loop() {
       player.rotation += frame_diff*0.002*isRotate;
       player.orientation[0] = cos(player.rotation);
       player.orientation[2] = sin(player.rotation);
+      alListenerfv(AL_ORIENTATION, player.orientation);
     }
     if (isMovement) {
       player.position[0] += player.orientation[0]*frame_diff*0.002*isMovement;
       player.position[2] += player.orientation[2]*frame_diff*0.002*isMovement;
+      alListenerfv(AL_POSITION, player.position);
     }
+    // something something AL_VELOCITY
 #ifdef DEBUG
     SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0,0,0));
     char text[80];
